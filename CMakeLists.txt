@@ -1,33 +1,33 @@
-project("pv_zoltan")
+cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
+project(pvZoltan)
 
-#--------------------------------------------------
-# cmake old/new compatibility
-#--------------------------------------------------
-cmake_minimum_required(VERSION 2.8)
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMake
+  ${CMAKE_SOURCE_DIR}/CMake/common)
 
-#--------------------------------------------------
-# cmake policies
-# see http://www.cmake.org/cmake/help/v2.8.12/cmake.html#section_Policies
-#--------------------------------------------------
-foreach(p
-    CMP0003 
-    CMP0017 
-    CMP0023 
-    CMP0042
-    )
-  if(POLICY ${p})
-    cmake_policy(SET ${p} NEW)
-  endif()
-endforeach()
+include(GitExternal)
 
-add_definitions(-DCMAKE_IS_BROKEN)
+set(VERSION_MAJOR "0")
+set(VERSION_MINOR "9")
+set(VERSION_PATCH "0")
+set(VERSION_ABI 1)
+
+set(PVZOLTAN_DESCRIPTION "Zoltan Plugin for ParaView")
+set(PVZOLTAN_MAINTAINER "Blue Brain Project <bbp-open-source@googlegroups.com>")
+set(PVZOLTAN_LICENSE LGPL)
+
+set(BUILD_TESTING OFF CACHE BOOL "Tests")
+set(BUILD_EXAMPLES OFF CACHE BOOL "Examples")
+set(PARAVIEW_QT_VERSION 5 CACHE STRING "Qt Version")
+
+set(COMMON_PROJECT_DOMAIN ch.epfl.bluebrain)
+include(Common)
 
 #-----------------------------------------------------------------------------
 # Basic naming/config stuff here
 #-----------------------------------------------------------------------------
-set(pv_zoltan_VERSION_MAJOR   0)
-set(pv_zoltan_VERSION_MINOR   9)
-set(pv_zoltan_VERSION_RELEASE 0)
+set(pv_zoltan_VERSION_MAJOR   ${VERSION_MAJOR})
+set(pv_zoltan_VERSION_MINOR   ${VERSION_MINOR})
+set(pv_zoltan_VERSION_RELEASE ${VERSION_PATCH})
 
 set (pv_zoltan                "pv_zoltan")
 set (pv_zoltan_NAME           "pv_zoltan")
@@ -47,20 +47,8 @@ SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 #--------------------------------------------------
 # Find and Use ParaView
 #--------------------------------------------------
-IF (ParaView_SOURCE_DIR)
-  IF(PARAVIEW_BUILD_QT_GUI)
-    INCLUDE(${QT_USE_FILE})
-  ENDIF(PARAVIEW_BUILD_QT_GUI)
-  INCLUDE_DIRECTORIES(
-    ${HDF5_INCLUDE_DIR}
-    ${PARAVIEW_INCLUDE_DIRS}
-    ${PARAVIEW_GUI_INCLUDE_DIRS}
-    ${VTK_INCLUDE_DIR}
-  )
-ELSE (ParaView_SOURCE_DIR)
-  FIND_PACKAGE(ParaView REQUIRED)
-  INCLUDE(${PARAVIEW_USE_FILE})
-ENDIF (ParaView_SOURCE_DIR)
+common_package(ParaView REQUIRED)
+common_package(MPI REQUIRED)
 
 #--------------------------------------------------
 # Set project include directories
@@ -70,24 +58,13 @@ INCLUDE_DIRECTORIES(
   "${PROJECT_BINARY_DIR}"
 )
 
-#------------------------------------------------------
-# MPI support
-#------------------------------------------------------
-IF (PARAVIEW_USE_MPI)
-  FIND_PACKAGE(MPI)   
-  INCLUDE_DIRECTORIES(${MPI_INCLUDE_PATH})
-ELSE (PARAVIEW_USE_MPI)
-  SET(USE_TRILINOS OFF CACHE BOOL "Use Trilinos library" FORCE)
-  message(FATAL_ERROR "pv-zoltan requires an MPI enabled ParaView")
-ENDIF (PARAVIEW_USE_MPI)
-
 # --------------------------------------------------
 # We must build sub libraries with -fPIC
 # --------------------------------------------------
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # --------------------------------------------------
-# Trilinos support 
+# Trilinos support
 # --------------------------------------------------
 SET(TRILINOS_ENABLED 0)
 
@@ -117,12 +94,12 @@ IF(Trilinos_FOUND)
   #
   # Add source which depends on trilinos to our plugin
   #
-  SET(TRILINOS_CXX 
+  SET(TRILINOS_CXX
     ${CMAKE_CURRENT_SOURCE_DIR}/vtkZoltanV1PartitionFilter.cxx
     ${CMAKE_CURRENT_SOURCE_DIR}/vtkParticlePartitionFilter.cxx
     ${CMAKE_CURRENT_SOURCE_DIR}/vtkMeshPartitionFilter.cxx
   )
-  SET(TRILINOS_XML 
+  SET(TRILINOS_XML
     ${CMAKE_CURRENT_SOURCE_DIR}/vtkZoltanV1PartitionFilter.xml
     ${CMAKE_CURRENT_SOURCE_DIR}/vtkParticlePartitionFilter.xml
     ${CMAKE_CURRENT_SOURCE_DIR}/vtkMeshPartitionFilter.xml
@@ -146,9 +123,9 @@ set(SRC_PATH   "${CMAKE_CURRENT_SOURCE_DIR}")
 SET(PLUGIN_NAME pv_zoltan)
 ADD_PARAVIEW_PLUGIN(
   ${PLUGIN_NAME}
-  "1.0" 
+  "1.0"
 
-  SERVER_MANAGER_XML     
+  SERVER_MANAGER_XML
     ${TRILINOS_XML}
     ${XML_PATH}/vtkPartitionOutline.xml
 
@@ -162,7 +139,7 @@ ADD_PARAVIEW_PLUGIN(
     ${Module_CUDA_C_SRCS}
     ${CMAKE_CURRENT_SOURCE_DIR}/vtkPKdTree2.cxx
 
-  GUI_INTERFACES 
+  GUI_INTERFACES
     ${ZOLTAN_IFACE}
 
   GUI_SOURCES
@@ -177,7 +154,7 @@ ADD_PARAVIEW_PLUGIN(
 #--------------------------------------------------
 # setup plugin linking
 #--------------------------------------------------
-TARGET_LINK_LIBRARIES(${PLUGIN_NAME} 
+TARGET_LINK_LIBRARIES(${PLUGIN_NAME}
   PUBLIC
     vtksys
     ${ZOLTAN_SDK_LIBRARIES}
@@ -191,7 +168,7 @@ IF (BUILD_TESTING)
   SET(PLUGIN_TEST_DIR ${PROJECT_BINARY_DIR}/Testing/Temporary)
   MAKE_DIRECTORY(${PLUGIN_TEST_DIR})
   ADD_SUBDIRECTORY(testing)
-ENDIF (BUILD_TESTING)  
+ENDIF (BUILD_TESTING)
 
 #--------------------------------------------------------
 # Create the configuration header.
@@ -210,9 +187,9 @@ set (${PROJECT_NAME}_INCLUDES_BUILD_TIME
   "${PROJECT_SOURCE_DIR}/trilinos/packages/zoltan/src/include"
 )
 if(WIN32)
-  set(${PROJECT_NAME}_INCLUDES_BUILD_TIME 
+  set(${PROJECT_NAME}_INCLUDES_BUILD_TIME
     ${PROJECT_SOURCE_DIR}/trilinos/cmake/tribits/common_tools/win_interface/include
-    ${${PROJECT_NAME}_INCLUDES_BUILD_TIME}      
+    ${${PROJECT_NAME}_INCLUDES_BUILD_TIME}
   )
 endif()
 
@@ -224,12 +201,12 @@ include(CMakeInstallation)
 #--------------------------------------------------
 # Install
 #--------------------------------------------------
-SET(INSTALL_PATH 
+SET(INSTALL_PATH
   "${CMAKE_INSTALL_PREFIX}/lib/paraview-${PARAVIEW_VERSION_MAJOR}.${PARAVIEW_VERSION_MINOR}"
 )
 
 INSTALL(
-  TARGETS 
+  TARGETS
     ${PLUGIN_NAME}
   DESTINATION ${INSTALL_PATH}
 )

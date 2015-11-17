@@ -1,0 +1,2 @@
+# -*- mode: cmake -*-
+git_subproject(ParaView https://github.com/Kitware/ParaView.git v5.0.0-RC1)
