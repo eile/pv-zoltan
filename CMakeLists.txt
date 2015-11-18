@@ -12,12 +12,13 @@ set(VERSION_PATCH "0")
 set(VERSION_ABI 1)
 
 set(PVZOLTAN_DESCRIPTION "Zoltan Plugin for ParaView")
-set(PVZOLTAN_MAINTAINER "Blue Brain Project <bbp-open-source@googlegroups.com>")
-set(PVZOLTAN_LICENSE LGPL)
+set(PVZOLTAN_MAINTAINER "CSCS <help@cscs.ch>")
+set(PVZOLTAN_LICENSE BSD)
 
 set(BUILD_TESTING OFF CACHE BOOL "Tests")
 set(BUILD_EXAMPLES OFF CACHE BOOL "Examples")
 set(PARAVIEW_QT_VERSION 5 CACHE STRING "Qt Version")
+set(PARAVIEW_USE_MPI ON CACHE BOOL "Use MPI")
 
 set(COMMON_PROJECT_DOMAIN ch.epfl.bluebrain)
 include(Common)
@@ -25,19 +26,19 @@ include(Common)
 #-----------------------------------------------------------------------------
 # Basic naming/config stuff here
 #-----------------------------------------------------------------------------
-set(pv_zoltan_VERSION_MAJOR   ${VERSION_MAJOR})
-set(pv_zoltan_VERSION_MINOR   ${VERSION_MINOR})
-set(pv_zoltan_VERSION_RELEASE ${VERSION_PATCH})
+set(pvZoltan_VERSION_MAJOR   ${VERSION_MAJOR})
+set(pvZoltan_VERSION_MINOR   ${VERSION_MINOR})
+set(pvZoltan_VERSION_RELEASE ${VERSION_PATCH})
 
-set (pv_zoltan                "pv_zoltan")
-set (pv_zoltan_NAME           "pv_zoltan")
-set (pv_zoltan_VERSION        "${pv_zoltan_VERSION_MAJOR}.${pv_zoltan_VERSION_MINOR}.${pv_zoltan_VERSION_RELEASE}")
-set (pv_zoltan_VERSION_STRING "${pv_zoltan_VERSION}")
-set (pv_zoltan_SOVERSION      "${pv_zoltan_SOVERS_MAJOR}.${pv_zoltan_SOVERS_RELEASE}.${pv_zoltan_SOVERS_MINOR}")
-set (pv_zoltan_STRING         "${pv_zoltan_NAME} ${pv_zoltan_VERSION_STRING}")
-set (pv_zoltan_TARNAME        "${pv_zoltan}")
-set (pv_zoltan_URL            "http://www.cscs.ch")
-set (pv_zoltan_BUGREPORT      "help@cscs.ch")
+set (pvZoltan                "pvZoltan")
+set (pvZoltan_NAME           "pvZoltan")
+set (pvZoltan_VERSION        "${pvZoltan_VERSION_MAJOR}.${pvZoltan_VERSION_MINOR}.${pvZoltan_VERSION_RELEASE}")
+set (pvZoltan_VERSION_STRING "${pvZoltan_VERSION}")
+set (pvZoltan_SOVERSION      "${pvZoltan_SOVERS_MAJOR}.${pvZoltan_SOVERS_RELEASE}.${pvZoltan_SOVERS_MINOR}")
+set (pvZoltan_STRING         "${pvZoltan_NAME} ${pvZoltan_VERSION_STRING}")
+set (pvZoltan_TARNAME        "${pvZoltan}")
+set (pvZoltan_URL            "http://www.cscs.ch")
+set (pvZoltan_BUGREPORT      ${PVZOLTAN_MAINTAINER})
 
 #--------------------------------------------------
 # Location of cmake files
@@ -49,6 +50,12 @@ SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 #--------------------------------------------------
 common_package(ParaView REQUIRED)
 common_package(MPI REQUIRED)
+
+include(${PARAVIEW_USE_FILE})
+include(vtkModuleAPI)
+include(vtkModuleMacros)
+include(ParaViewMacros)
+include_directories(${MPI_C_INCLUDE_PATH})
 
 #--------------------------------------------------
 # Set project include directories
@@ -120,8 +127,8 @@ set(SRC_PATH   "${CMAKE_CURRENT_SOURCE_DIR}")
 #--------------------------------------------------
 # Define plugin sources
 #--------------------------------------------------
-SET(PLUGIN_NAME pv_zoltan)
-ADD_PARAVIEW_PLUGIN(
+SET(PLUGIN_NAME pvZoltan)
+add_paraview_plugin(
   ${PLUGIN_NAME}
   "1.0"
 
@@ -148,7 +155,7 @@ ADD_PARAVIEW_PLUGIN(
     ${ZOLTAN_UI_SOURCES}
 
   GUI_RESOURCE_FILES
-    ${XML_PATH}/pv_zoltan_Filters.xml
+    ${XML_PATH}/pvZoltan_Filters.xml
 )
 
 #--------------------------------------------------
@@ -174,7 +181,7 @@ ENDIF (BUILD_TESTING)
 # Create the configuration header.
 #--------------------------------------------------------
 CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/module_configure.h.in
-               ${PROJECT_BINARY_DIR}/pv_zoltan_configure.h
+               ${PROJECT_BINARY_DIR}/pvZoltan_configure.h
                @ONLY IMMEDIATE)
 
 #-----------------------------------------------------------------------------
@@ -196,7 +203,7 @@ endif()
 
 return()
 
-include(CMakeInstallation)
+# include(CMakeInstallation)
 
 #--------------------------------------------------
 # Install
@@ -205,8 +212,4 @@ SET(INSTALL_PATH
   "${CMAKE_INSTALL_PREFIX}/lib/paraview-${PARAVIEW_VERSION_MAJOR}.${PARAVIEW_VERSION_MINOR}"
 )
 
-INSTALL(
-  TARGETS
-    ${PLUGIN_NAME}
-  DESTINATION ${INSTALL_PATH}
-)
+INSTALL(TARGETS ${PLUGIN_NAME} DESTINATION ${INSTALL_PATH})
